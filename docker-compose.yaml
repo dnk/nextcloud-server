@@ -44,7 +44,6 @@ services:
         type: bind
         source: /etc/nginx/certs
         target: /etc/nginx/certs:ro
-      - vhost.d:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
       - /var/run/docker.sock:/tmp/docker.sock:ro
       - nextcloud:/var/www/html:ro
@@ -58,7 +57,6 @@ services:
 volumes:
   db:
   nextcloud:
-  vhost.d:
   html:
 
 networks:
