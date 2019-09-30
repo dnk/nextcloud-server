@@ -1,0 +1,66 @@
+version: "3.3"
+
+services:
+  db:
+    image: postgres:11.5-alpine
+    restart: always
+    volumes:
+      - db:/var/lib/postgresql/data
+    env_file:
+      - db.env
+    networks:
+      db2app:
+        aliases:
+          - db
+
+  app:
+    image: nextcloud:16.0.5-fpm-alpine
+    restart: always
+    volumes:
+      - nextcloud:/var/www/html
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_DB: nextcloud
+      NEXTCLOUD_TRUSTED_DOMAINS: micro-world.xyz
+    env_file:
+      - db.env
+      - nextcloud.env
+    depends_on:
+      - db
+    networks:
+      db2app:
+      proxy2app:
+        aliases:
+          - app
+
+  proxy:
+    build: ./proxy
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - certs: #/etc/nginx/certs:ro
+        type: bind
+        source: /etc/nginx/certs
+        target: /etc/nginx/certs:ro
+      - vhost.d:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - nextcloud:/var/www/html:ro
+    depends_on:
+      - app
+    links:
+      - app
+    networks:
+      - proxy2app
+
+volumes:
+  db:
+  nextcloud:
+  vhost.d:
+  html:
+
+networks:
+  db2app:
+  proxy2app:
